@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P1-4 ACW1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="brand">
+        <h1 class="brand__name">P1-4 ACW1</h1>
+        <p class="brand__tagline">LSB steganography with signed integrity verification</p>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button class="tabs__tab is-active" role="tab" id="tab-protect" aria-controls="panel-protect"
+          aria-selected="true">Protect</button>
+        <button class="tabs__tab" role="tab" id="tab-verify" aria-controls="panel-verify"
+          aria-selected="false">Verify</button>
+        <button class="tabs__tab" role="tab" id="tab-keys" aria-controls="panel-keys"
+          aria-selected="false">Keys</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- ============================== PROTECT ============================== -->
+    <section class="panel is-active" id="panel-protect" role="tabpanel" aria-labelledby="tab-protect">
+      <div class="layout">
+        <form class="card form" id="protect-form" autocomplete="off" novalidate>
+          <h2 class="card__title">Protect a file</h2>
+          <p class="card__hint">Embed a signed verification payload into a PNG image or 16-bit WAV file.</p>
+
+          <div class="field">
+            <span class="field__label">Cover file</span>
+            <label class="dropzone" data-dropzone>
+              <input type="file" id="protect-cover" accept=".png,.wav,image/png,audio/wav" required>
+              <span class="dropzone__title" data-dropzone-title>Drop a PNG or WAV here, or click to browse</span>
+              <span class="dropzone__meta" id="protect-cover-meta"></span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="protect-private-key">Private key (.pem)</label>
+            <input class="input input--file" type="file" id="protect-private-key" accept=".pem" required>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="protect-secret-key">Secret Key</label>
+            <div class="secret-input">
+              <input class="input input--masked" type="text" id="protect-secret-key" autocomplete="off"
+                autocapitalize="off" spellcheck="false" required>
+              <button class="secret-input__toggle" type="button" data-toggle-secret="protect-secret-key">Show</button>
+            </div>
+          </div>
+          <p class="field__help" id="protect-secret-key-hint"></p>
+
+          <div class="field">
+            <label class="field__label" for="protect-sender">Sender</label>
+            <input class="input" type="text" id="protect-sender" placeholder="e.g. John Doe">
+            <span class="field__counter" id="protect-sender-counter"></span>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="protect-note">Secret note</label>
+            <textarea class="input input--textarea" id="protect-note" rows="3"></textarea>
+            <span class="field__counter" id="protect-note-counter"></span>
+          </div>
+
+          <div class="field">
+            <div class="field__label-row">
+              <label class="field__label" for="protect-lsb">Number of LSBs (k)</label>
+              <output class="badge" id="protect-lsb-value" for="protect-lsb">1</output>
+            </div>
+            <input class="slider" type="range" id="protect-lsb" min="1" max="8" step="1" value="1">
+            <div class="slider__scale" aria-hidden="true">
+              <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span>
+            </div>
+          </div>
+
+          <div class="capacity" id="protect-capacity">
+            <div class="capacity__labels">
+              <span>Capacity</span>
+              <span id="protect-capacity-text">Select a cover file</span>
+            </div>
+            <div class="capacity__track">
+              <div class="capacity__fill" id="protect-capacity-fill"></div>
+            </div>
+          </div>
+
+          <p class="alert alert--error" id="protect-error" role="alert" hidden></p>
+          <button class="button button--primary button--block" type="submit" id="protect-submit">Protect file</button>
+        </form>
+
+        <div class="results" id="protect-results">
+          <div class="card empty-state" id="protect-empty">
+            <p class="empty-state__title">No protected file yet</p>
+            <p class="empty-state__text">Results, the before-and-after comparison and the stego download appear here.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== VERIFY =============================== -->
+    <section class="panel" id="panel-verify" role="tabpanel" aria-labelledby="tab-verify" hidden>
+      <div class="layout">
+        <form class="card form" id="verify-form" autocomplete="off" novalidate>
+          <h2 class="card__title">Verify a file</h2>
+          <p class="card__hint">Extract the hidden payload, check its signature and recompute the media hash.</p>
+
+          <div class="field">
+            <span class="field__label">Stego file</span>
+            <label class="dropzone" data-dropzone>
+              <input type="file" id="verify-stego" accept=".png,.wav,image/png,audio/wav" required>
+              <span class="dropzone__title" data-dropzone-title>Drop the file to verify, or click to browse</span>
+              <span class="dropzone__meta" id="verify-stego-meta"></span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="verify-public-key">Public key (.pem)</label>
+            <input class="input input--file" type="file" id="verify-public-key" accept=".pem" required>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="verify-secret-key">Secret Key</label>
+            <div class="secret-input">
+              <input class="input input--masked" type="text" id="verify-secret-key" autocomplete="off"
+                autocapitalize="off" spellcheck="false" required>
+              <button class="secret-input__toggle" type="button" data-toggle-secret="verify-secret-key">Show</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="verify-original">Original file <span class="field__optional">optional, for
+                comparison</span></label>
+            <input class="input input--file" type="file" id="verify-original" accept=".png,.wav,image/png,audio/wav">
+          </div>
+
+          <p class="alert alert--error" id="verify-error" role="alert" hidden></p>
+          <button class="button button--primary button--block" type="submit" id="verify-submit">Verify file</button>
+        </form>
+
+        <div class="results" id="verify-results">
+          <div class="card empty-state" id="verify-empty">
+            <p class="empty-state__title">No verification yet</p>
+            <p class="empty-state__text">The verdict, each check and the extracted payload appear here.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================== KEYS ================================ -->
+    <section class="panel" id="panel-keys" role="tabpanel" aria-labelledby="tab-keys" hidden>
+      <div class="card keys-card">
+        <h2 class="card__title">Signing keys</h2>
+        <p class="card__hint">Generate an Ed25519 key pair. The private key signs payloads in Protect; the public key
+          checks them in Verify. Keys are not stored on the server.</p>
+        <button class="button button--primary" type="button" id="keys-generate">Generate key pair</button>
+        <div class="keys-downloads" id="keys-downloads" hidden>
+          <div class="keys-downloads__buttons">
+            <button class="button button--secondary" type="button" id="keys-download-private">Download private
+              key</button>
+            <button class="button button--secondary" type="button" id="keys-download-public">Download public
+              key</button>
+          </div>
+          <p class="alert alert--warning">Keep the private key secret. Anyone with it can sign payloads as you. Share
+            only the public key with verifiers.</p>
+        </div>
+        <p class="alert alert--error" id="keys-error" role="alert" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+
+</html>
